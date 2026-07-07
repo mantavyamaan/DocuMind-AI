@@ -74,5 +74,14 @@ def delete_document(filename):
     conn.commit()
     conn.close()
 
+def get_all_history():
+    """Retrieves all chat interactions from the database."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT timestamp, question, rag_answer, sources FROM history ORDER BY id DESC')
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"timestamp": row[0], "question": row[1], "rag_answer": row[2], "sources": row[3]} for row in rows]
+
 # Initialize the database when the module is imported
 init_db()

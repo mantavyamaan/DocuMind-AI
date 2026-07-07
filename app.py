@@ -45,6 +45,21 @@ with st.sidebar:
     else:
         st.write("No documents stored yet.")
 
+    st.markdown("---")
+    st.subheader("📜 Chat Logs")
+    
+    # We use a button to refresh logs, or they update when the script reruns.
+    history = db.get_all_history()
+    if history:
+        with st.expander("View Past Conversations"):
+            for entry in history:
+                st.markdown(f"**Q: {entry['question']}**")
+                st.markdown(f"*A: {entry['rag_answer']}*")
+                st.caption(f"Sources: {entry['sources']} | {entry['timestamp']}")
+                st.divider()
+    else:
+        st.write("No history yet.")
+
 # --- Main App ---
 question = st.text_input(
     "Ask an HR policy question:",
