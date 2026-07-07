@@ -6,7 +6,7 @@ st.set_page_config(
     layout="wide"
 )
 
-from rag import ask_base_model, ask_rag_model
+from rag import ask_base_model, ask_rag_model, stream_base_model, stream_rag_model
 import db
 
 st.title("Open-source LLM Optimization POC")
@@ -74,15 +74,13 @@ if st.button("Ask") and question:
 
     with col1:
         st.markdown("### Base Open-source LLM")
-        with st.spinner("Generating base model answer..."):
-            base_answer = ask_base_model(question)
-        st.write(base_answer)
+        base_answer = st.write_stream(stream_base_model(question))
 
     with col2:
         st.markdown("### RAG-Optimized LLM")
-        with st.spinner("Retrieving documents and generating answer..."):
-            rag_result = ask_rag_model(question)
-        st.write(rag_result["answer"])
+        with st.spinner("Retrieving context..."):
+            rag_result = stream_rag_model(question)
+        rag_answer = st.write_stream(rag_result["answer_stream"])
 
         st.markdown("### Sources")
         for source in rag_result["sources"]:
@@ -95,6 +93,6 @@ if st.button("Ask") and question:
     db.save_interaction(
         question=question,
         base_answer=base_answer,
-        rag_answer=rag_result["answer"],
+        rag_answer=rag_answer,
         sources=rag_result["sources"]
     )

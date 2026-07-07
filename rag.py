@@ -52,6 +52,18 @@ Question:
 """
     return llm.invoke(prompt)
 
+def stream_base_model(question: str):
+    """Returns a generator that yields the base model's answer in chunks."""
+    prompt = f"""
+You are a helpful assistant.
+
+Answer the following question:
+
+Question:
+{question}
+"""
+    return llm.stream(prompt)
+
 
 def ask_rag_model(question: str) -> dict:
     # Initialize dynamically to ensure we always read the latest database
@@ -83,6 +95,31 @@ def ask_rag_model(question: str) -> dict:
 
     return {
         "answer": answer,
+        "sources": sources,
+        "retrieved_context": context
+    }
+
+def stream_rag_model(question: str) -> dict:
+    """Returns a dictionary containing a generator for the streaming answer, plus sources and context."""
+    vector_store = Chroma(
+        persist_directory=DB_DIR,
+        embedding_function=embeddings
+    )
+    retriever = vector_store.as_retriever(search_kwargs={"k": 4})
+    
+    docs = retriever.invoke(question)
+
+    context = "\n\n".join(
+        [f"Document Source: {doc.metadata.get('source', 'Unknown')}\nContent: {doc.page_content}" for doc in docs]
+    )
+
+    chain = RAG_PROMPT | llm | StrOutputParser()
+    answer_stream = chain.stream({"context": context, "question": question})
+
+    sources = list(set([doc.metadata.get("source", "Unknown") for doc in docs]))
+
+    return {
+        "answer_stream": answer_stream,
         "sources": sources,
         "retrieved_context": context
     }
