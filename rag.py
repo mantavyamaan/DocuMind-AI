@@ -1,6 +1,7 @@
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 
 DB_DIR = "vector_db"
