@@ -26,8 +26,13 @@ def load_documents():
 
 def create_vector_database():
     # Clear existing vector database to rebuild it dynamically
+    embeddings = OllamaEmbeddings(model="nomic-embed-text")
     if os.path.exists(DB_DIR):
-        shutil.rmtree(DB_DIR)
+        try:
+            vector_store = Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
+            vector_store.delete_collection()
+        except Exception as e:
+            print(f"Warning: Could not delete old collection: {e}")
 
     documents = load_documents()
     
