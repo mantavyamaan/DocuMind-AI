@@ -28,13 +28,16 @@ with st.sidebar:
     
     uploaded_file = st.file_uploader("Upload a .txt policy", type=["txt"])
     if uploaded_file is not None:
-        filename = uploaded_file.name
-        content = uploaded_file.getvalue().decode("utf-8")
-        
-        with st.spinner("Saving and indexing document..."):
-            db.save_document(filename, content)
-            create_vector_database()
-        st.success(f"Successfully added {filename}!")
+        file_hash = hash(uploaded_file.getvalue())
+        if st.session_state.get("last_uploaded_hash") != file_hash:
+            filename = uploaded_file.name
+            content = uploaded_file.getvalue().decode("utf-8")
+            
+            with st.spinner("Saving and indexing document..."):
+                db.save_document(filename, content)
+                create_vector_database()
+            st.success(f"Successfully added {filename}!")
+            st.session_state["last_uploaded_hash"] = file_hash
         
     st.markdown("---")
     st.subheader("📚 Currently Stored Policies")
