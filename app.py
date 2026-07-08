@@ -8,6 +8,7 @@ st.set_page_config(
 
 from rag import ask_base_model, ask_rag_model, stream_base_model, stream_rag_model
 import db
+import json
 
 st.title("Open-source LLM Optimization POC")
 st.subheader("HR Policy Assistant using Qwen + RAG")
@@ -62,6 +63,28 @@ with st.sidebar:
                 st.divider()
     else:
         st.write("No history yet.")
+
+    st.markdown("---")
+    st.subheader("📊 Evaluation Matrix")
+    try:
+        with open("eval/results.json", "r", encoding="utf-8") as f:
+            eval_data = json.load(f)
+        
+        matrix = eval_data.get("matrix", {})
+        if matrix:
+            st.markdown(
+                f"""
+| Metric | Base | RAG |
+|---|---|---|
+| **Accuracy** | {matrix.get('Factual_Accuracy', {}).get('Base', '0%')} | {matrix.get('Factual_Accuracy', {}).get('RAG', '0%')} |
+| **Hallucinations** | {matrix.get('Hallucination_Rate', {}).get('Base', '0%')} | {matrix.get('Hallucination_Rate', {}).get('RAG', '0%')} |
+| **Sourced** | {matrix.get('Source_Grounding', {}).get('Base', '0%')} | {matrix.get('Source_Grounding', {}).get('RAG', '0%')} |
+                """
+            )
+        else:
+            st.caption("No matrix data found.")
+    except Exception:
+        st.caption("Run evaluate.py to generate matrix.")
 
 # --- Main App ---
 question = st.text_input(
