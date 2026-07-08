@@ -7,12 +7,13 @@ Instead of relying on computationally expensive fine-tuning, this project utiliz
 
 ## Features
 * **Local Open-Source AI:** Uses `Qwen2.5:7b` via Ollama for fast, secure, and private on-device inference.
+* **Real-time UI Streaming:** Answers are streamed word-by-word into the UI (just like ChatGPT) for zero perceived latency.
 * **Dynamic Document Retrieval (RAG):** Upload `.txt` policy files directly through the web UI. They are instantly stored in an SQLite database and ingested into a local ChromaDB vector database.
 * **Chat Logging:** All questions, generated answers, and source citations are silently logged to an SQLite database (`chat_history.db`) for auditing.
 * **Source Citation:** The optimized model explicitly cites the exact internal document used to generate its answer.
 * **Hallucination Mitigation:** Strict prompt engineering ensures the model refuses to answer if the information is not present in the internal documents.
-* **Automated Evaluation:** Includes an evaluation script to quantitatively compare the Base LLM vs. the RAG-optimized LLM.
-* **Interactive UI:** Built with Streamlit for a clean, user-friendly chat interface with a sidebar for Document Management.
+* **Automated Evaluation Matrix:** Includes a benchmarking script that tests for Factual Accuracy, Hallucination Prevention, and Source Grounding. The results are displayed live in a beautiful matrix in the Streamlit UI.
+* **Interactive UI:** Built with Streamlit for a clean, user-friendly chat interface with a sidebar for Document Management and Live Analytics.
 
 ## Tech Stack
 * **Language:** Python 3.10+
