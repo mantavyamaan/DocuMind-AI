@@ -82,15 +82,21 @@ with st.sidebar:
         
         matrix = eval_data.get("matrix", {})
         if matrix:
-            st.markdown(
-                f"""
-| Metric | Base | RAG |
-|---|---|---|
-| **Accuracy** | {matrix.get('Factual_Accuracy', {}).get('Base', '0%')} | {matrix.get('Factual_Accuracy', {}).get('RAG', '0%')} |
-| **Hallucinations** | {matrix.get('Hallucination_Rate', {}).get('Base', '0%')} | {matrix.get('Hallucination_Rate', {}).get('RAG', '0%')} |
-| **Sourced** | {matrix.get('Source_Grounding', {}).get('Base', '0%')} | {matrix.get('Source_Grounding', {}).get('RAG', '0%')} |
-                """
-            )
+            import pandas as pd
+            df = pd.DataFrame({
+                "Metric": ["Accuracy", "Hallucinations", "Sourced"],
+                "Base": [
+                    matrix.get("Factual_Accuracy", {}).get("Base", "0%"),
+                    matrix.get("Hallucination_Rate", {}).get("Base", "0%"),
+                    matrix.get("Source_Grounding", {}).get("Base", "0%")
+                ],
+                "RAG": [
+                    matrix.get("Factual_Accuracy", {}).get("RAG", "0%"),
+                    matrix.get("Hallucination_Rate", {}).get("RAG", "0%"),
+                    matrix.get("Source_Grounding", {}).get("RAG", "0%")
+                ]
+            })
+            st.table(df.set_index("Metric"))
         else:
             st.caption("No matrix data found.")
     except Exception:
