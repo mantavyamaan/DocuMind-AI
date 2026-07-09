@@ -6,9 +6,9 @@ This Proof of Concept (POC) demonstrates how a general-purpose, open-source Larg
 Instead of relying on computationally expensive fine-tuning, this project utilizes **Retrieval-Augmented Generation (RAG)** to ground the LLM in internal company documents. This approach significantly improves factual accuracy, reduces hallucinations, allows for explicit source citations, and keeps data private by running the model locally.
 
 ## Features
-* **Local Open-Source AI:** Uses `Qwen2.5:7b` via Ollama for fast, secure, and private on-device inference.
+* **Dual-Mode Architecture:** Run the entire system locally on your laptop, or instantly flip a switch to process massive 100 GB+ datasets using Enterprise Cloud infrastructure (Amazon S3 + Pinecone + OpenAI Embeddings).
+* **Local Open-Source AI:** Uses `Qwen2.5:7b` via Ollama for fast, secure, and private on-device text generation.
 * **Real-time UI Streaming:** Answers are streamed word-by-word into the UI (just like ChatGPT) for zero perceived latency.
-* **Enterprise Cloud Data Pipeline (100 GB+):** Connects directly to Amazon S3 to stream massive datasets without downloading them, and embeds them straight into Pinecone Vector Database for lightning-fast, highly scalable search.
 * **Chat Logging:** All questions, generated answers, and source citations are silently logged to an SQLite database (`chat_history.db`) for auditing.
 * **Source Citation:** The optimized model explicitly cites the exact internal document used to generate its answer.
 * **Hallucination Mitigation:** Strict prompt engineering ensures the model refuses to answer if the information is not present in the internal documents.
@@ -17,11 +17,11 @@ Instead of relying on computationally expensive fine-tuning, this project utiliz
 
 ## Tech Stack
 * **Language:** Python 3.10+
-* **LLM Engine:** Ollama
-* **Models:** `qwen2.5:7b` (Text Generation), `nomic-embed-text` (Embeddings)
+* **LLM Engine:** Ollama (`qwen2.5:7b`)
 * **Orchestration:** LangChain
-* **Databases:** SQLite (Chat Logging), Pinecone (Cloud Vector Search), Amazon S3 (Cloud Document Storage)
 * **Frontend:** Streamlit
+* **Local Mode Stack:** ChromaDB, `nomic-embed-text`
+* **Enterprise Cloud Stack:** Amazon S3, Pinecone, OpenAI (`text-embedding-3-small`)
 
 ---
 
@@ -61,30 +61,42 @@ Install the required Python packages using the provided requirements file:
 pip install -r requirements.txt
 ```
 
-### 5. Enterprise Cloud Setup (.env)
-This project requires AWS S3 and Pinecone to handle massive datasets.
-1. Create a file named `.env` in the root directory.
-2. Copy the contents of `.env.example` into your new `.env` file.
-3. Fill in your private API keys:
-   * **AWS S3**: Your Access Key, Secret Key, Region, and Bucket Name.
-   * **Pinecone**: Your API Key and Index Name.
+---
+
+## ⚙️ Architecture Selection (Local vs. Cloud)
+This project supports two modes. You configure them via a `.env` file.
+Copy the `.env.example` file to a new file named `.env`:
+
+### Option A: Local Mode (Default)
+Runs 100% locally on your laptop using ChromaDB and Ollama.
+* Leave `USE_CLOUD_SETUP=false` in your `.env` file.
+* Put your `.txt` files in the local `data/` folder.
+
+### Option B: Enterprise Cloud Mode (For 100 GB+ Datasets)
+Bypasses local hardware limits by streaming from Amazon S3, embedding with OpenAI, and storing in Pinecone.
+* Set `USE_CLOUD_SETUP=true` in your `.env` file.
+* Fill in your AWS, Pinecone, and OpenAI API keys in the `.env` file.
+* Put your `.txt` files in your Amazon S3 Bucket.
 
 ---
 
 ## 🏃‍♂️ Running the Application
 
-### Launch the Web Interface
-Start the Streamlit application to interact with the HR Assistant and manage documents:
+### 1. Ingest the Data
+Open your terminal and run the ingestion pipeline. It will automatically detect whether you are in Local or Cloud mode and process your data safely in batches.
+```bash
+python ingest.py
+```
+
+### 2. Launch the Web Interface
+Start the Streamlit application to interact with the HR Assistant:
 ```bash
 streamlit run app.py
 ```
 *This will open a browser window (usually at `http://localhost:8501`).*
 
-### How to Use
-1. **Upload Policies to S3:** Upload your massive `.txt` policy files directly into your Amazon S3 bucket.
-2. **Ingest the Data:** Open your terminal and run `python ingest.py`. This script will safely stream and process the files in small 5MB batches from S3 directly into Pinecone.
-3. **Ask Questions:** Type a question in the main chat input of the Streamlit app. It will fetch context from Pinecone in milliseconds.
-4. **View Logs:** All chats are securely logged in the local `chat_history.db` file.
+### 3. View Logs
+All chats are securely logged in the local `chat_history.db` file.
 
 ---
 
@@ -94,20 +106,3 @@ To benchmark the accuracy of the Base Model versus the RAG Model against a prede
 python evaluate.py
 ```
 *This will output the accuracy percentages directly in the terminal and save detailed results to `eval/results.json`.*
-
----
-
-## Project Structure
-```text
-open-source-llm-rag-poc/
-├── app.py                  # Streamlit frontend UI
-├── db.py                   # SQLite database manager (documents & chat history)
-├── ingest.py               # Document chunking and ChromaDB ingestion script
-├── rag.py                  # Core logic for Base LLM and RAG-optimized LLM pipelines
-├── evaluate.py             # Script to benchmark Base vs. RAG accuracy
-├── requirements.txt        # Python dependencies
-├── chat_history.db         # Auto-generated SQLite database
-├── vector_db/              # Auto-generated by ChromaDB to store embeddings
-└── eval/
-    └── questions.json      # Test dataset for evaluate.py
-```

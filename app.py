@@ -1,4 +1,8 @@
+import os
 import streamlit as st
+import db
+import json
+from rag import ask_base_model, ask_rag_model, stream_base_model, stream_rag_model
 
 st.set_page_config(
     page_title="Open-source LLM RAG POC",
@@ -6,12 +10,16 @@ st.set_page_config(
     layout="wide"
 )
 
-from rag import ask_base_model, ask_rag_model, stream_base_model, stream_rag_model
-import db
-import json
+# Detect Mode
+use_cloud = os.getenv("USE_CLOUD_SETUP", "false").lower() == "true"
 
 st.title("Open-source LLM Optimization POC")
 st.subheader("HR Policy Assistant using Qwen + RAG")
+
+if use_cloud:
+    st.success("☁️ **Running in Enterprise Cloud Mode** (Amazon S3 + Pinecone + OpenAI)")
+else:
+    st.info("💻 **Running in Local Mode** (Local Folder + ChromaDB + Ollama)")
 
 st.write(
     """
@@ -20,22 +28,33 @@ The optimized version retrieves relevant HR policy documents before answering.
 """
 )
 
-
 # --- Sidebar: Document Management ---
 with st.sidebar:
     st.header("📄 Document Management")
     st.write("Upload HR policies here. The AI will automatically ingest them.")
     
-    st.info("💡 **Enterprise Cloud Setup**\nDocuments are now securely managed via Amazon S3. Configure your `.env` file and run `python ingest.py` to stream updates into Pinecone.")
-        
-    st.markdown("---")
-    st.subheader("📚 Currently Stored Policies")
-    st.write("Fetching policies directly from Amazon S3 is disabled in the UI for performance. Please check your S3 bucket directly.")
+    if use_cloud:
+        st.info("💡 **Enterprise Cloud Setup**\\nDocuments are now securely managed via Amazon S3. Configure your `.env` file and run `python ingest.py` to stream updates into Pinecone.")
+        st.markdown("---")
+        st.subheader("📚 Currently Stored Policies")
+        st.write("Fetching policies directly from Amazon S3 is disabled in the UI for performance. Please check your S3 bucket directly.")
+    else:
+        st.info("💡 **Local Data Mode**\\nTo ingest files, please place your `.txt` files directly into the `data/` folder on your computer, and run `python ingest.py` in your terminal.")
+        st.markdown("---")
+        st.subheader("📚 Currently Stored Policies")
+        if os.path.exists("data"):
+            files = [f for f in os.listdir("data") if f.endswith('.txt')]
+            if files:
+                for f in files:
+                    st.write(f"- {f}")
+            else:
+                st.write("No documents in data/ yet.")
+        else:
+            st.write("Directory data/ does not exist.")
 
     st.markdown("---")
     st.subheader("📜 Chat Logs")
     
-    # We use a button to refresh logs, or they update when the script reruns.
     history = db.get_all_history()
     if history:
         with st.expander("View Past Conversations"):
@@ -84,7 +103,8 @@ if st.button("Ask") and question:
 
     with col2:
         st.markdown("### RAG-Optimized LLM")
-        with st.spinner("Retrieving context from Pinecone..."):
+        spinner_text = "Retrieving context from Pinecone..." if use_cloud else "Retrieving context from Local ChromaDB..."
+        with st.spinner(spinner_text):
             try:
                 rag_result = stream_rag_model(question)
                 rag_answer = st.write_stream(rag_result["answer_stream"])
@@ -102,7 +122,6 @@ if st.button("Ask") and question:
     with st.expander("Retrieved Context"):
         st.text(rag_result["retrieved_context"])
         
-    # Save to database
     db.save_interaction(
         question=question,
         base_answer=base_answer,

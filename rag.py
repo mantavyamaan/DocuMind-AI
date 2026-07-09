@@ -1,19 +1,23 @@
 import os
 from dotenv import load_dotenv
-from langchain_ollama import OllamaLLM, OllamaEmbeddings
-from langchain_pinecone import PineconeVectorStore
-from pinecone import Pinecone
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
+# Import Dual Mode modules
+from langchain_ollama import OllamaLLM, OllamaEmbeddings
+from langchain_chroma import Chroma
+from langchain_pinecone import PineconeVectorStore
+from langchain_openai import OpenAIEmbeddings
+from pinecone import Pinecone
+
 load_dotenv()
+
+DB_DIR = "vector_db"
 
 llm = OllamaLLM(
     model="qwen2.5:7b",
     temperature=0.1
 )
-
-embeddings = OllamaEmbeddings(model="nomic-embed-text")
 
 RAG_PROMPT = PromptTemplate(
     input_variables=["context", "question"],
@@ -64,16 +68,26 @@ Question:
 """
     return llm.stream(prompt)
 
+
 def get_vector_store():
-    # Initialize Pinecone
-    PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-    PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME")
+    use_cloud = os.getenv("USE_CLOUD_SETUP", "false").lower() == "true"
     
-    if not PINECONE_API_KEY or not PINECONE_INDEX_NAME:
-        raise ValueError("Missing Pinecone API keys. Please configure your .env file.")
+    if use_cloud:
+        # Initialize Pinecone
+        PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+        PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME")
+        OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         
-    pc = Pinecone(api_key=PINECONE_API_KEY)
-    return PineconeVectorStore(index_name=PINECONE_INDEX_NAME, embedding=embeddings)
+        if not all([PINECONE_API_KEY, PINECONE_INDEX_NAME, OPENAI_API_KEY]):
+            raise ValueError("Missing Cloud API keys. Please configure your .env file or set USE_CLOUD_SETUP=false.")
+            
+        pc = Pinecone(api_key=PINECONE_API_KEY)
+        embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=OPENAI_API_KEY)
+        return PineconeVectorStore(index_name=PINECONE_INDEX_NAME, embedding=embeddings)
+    else:
+        # Initialize Local ChromaDB
+        embeddings = OllamaEmbeddings(model="nomic-embed-text")
+        return Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
 
 
 def ask_rag_model(question: str) -> dict:
@@ -144,4 +158,4 @@ if __name__ == "__main__":
             print(chunk, end="", flush=True)
         print("\nSources:", result["sources"])
     except Exception as e:
-        print(f"Error connecting to Pinecone: {e}")
+        print(f"Error: {e}")
