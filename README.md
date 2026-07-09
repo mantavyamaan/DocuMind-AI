@@ -8,7 +8,7 @@ Instead of relying on computationally expensive fine-tuning, this project utiliz
 ## Features
 * **Local Open-Source AI:** Uses `Qwen2.5:7b` via Ollama for fast, secure, and private on-device inference.
 * **Real-time UI Streaming:** Answers are streamed word-by-word into the UI (just like ChatGPT) for zero perceived latency.
-* **Massive Data Pipeline (100 GB+):** Bypasses web-browser limits using a robust background ingestion engine that streams text directly from a local `data/` drop-zone into ChromaDB without crashing RAM.
+* **Enterprise Cloud Data Pipeline (100 GB+):** Connects directly to Amazon S3 to stream massive datasets without downloading them, and embeds them straight into Pinecone Vector Database for lightning-fast, highly scalable search.
 * **Chat Logging:** All questions, generated answers, and source citations are silently logged to an SQLite database (`chat_history.db`) for auditing.
 * **Source Citation:** The optimized model explicitly cites the exact internal document used to generate its answer.
 * **Hallucination Mitigation:** Strict prompt engineering ensures the model refuses to answer if the information is not present in the internal documents.
@@ -20,7 +20,7 @@ Instead of relying on computationally expensive fine-tuning, this project utiliz
 * **LLM Engine:** Ollama
 * **Models:** `qwen2.5:7b` (Text Generation), `nomic-embed-text` (Embeddings)
 * **Orchestration:** LangChain
-* **Databases:** SQLite (Document Storage & Chat Logging), ChromaDB (Vector Search)
+* **Databases:** SQLite (Chat Logging), Pinecone (Cloud Vector Search), Amazon S3 (Cloud Document Storage)
 * **Frontend:** Streamlit
 
 ---
@@ -61,6 +61,14 @@ Install the required Python packages using the provided requirements file:
 pip install -r requirements.txt
 ```
 
+### 5. Enterprise Cloud Setup (.env)
+This project requires AWS S3 and Pinecone to handle massive datasets.
+1. Create a file named `.env` in the root directory.
+2. Copy the contents of `.env.example` into your new `.env` file.
+3. Fill in your private API keys:
+   * **AWS S3**: Your Access Key, Secret Key, Region, and Bucket Name.
+   * **Pinecone**: Your API Key and Index Name.
+
 ---
 
 ## 🏃‍♂️ Running the Application
@@ -73,9 +81,9 @@ streamlit run app.py
 *This will open a browser window (usually at `http://localhost:8501`).*
 
 ### How to Use
-1. **Upload Policies (100 GB Support):** Place your massive `.txt` policy files directly into the `data/` folder in this repository. 
-2. **Ingest the Data:** Open your terminal and run `python ingest.py`. This script is built to safely process files in small batches to prevent Memory (RAM) crashes.
-3. **Ask Questions:** Type a question in the main chat input of the Streamlit app.
+1. **Upload Policies to S3:** Upload your massive `.txt` policy files directly into your Amazon S3 bucket.
+2. **Ingest the Data:** Open your terminal and run `python ingest.py`. This script will safely stream and process the files in small 5MB batches from S3 directly into Pinecone.
+3. **Ask Questions:** Type a question in the main chat input of the Streamlit app. It will fetch context from Pinecone in milliseconds.
 4. **View Logs:** All chats are securely logged in the local `chat_history.db` file.
 
 ---

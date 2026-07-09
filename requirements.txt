@@ -7,3 +7,6 @@ streamlit
 pypdf
 python-dotenv
 scikit-learn
+boto3
+pinecone-client
+langchain-pinecone

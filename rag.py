@@ -1,10 +1,12 @@
+import os
+from dotenv import load_dotenv
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
-from langchain_chroma import Chroma
+from langchain_pinecone import PineconeVectorStore
+from pinecone import Pinecone
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-
-DB_DIR = "vector_db"
+load_dotenv()
 
 llm = OllamaLLM(
     model="qwen2.5:7b",
@@ -12,8 +14,6 @@ llm = OllamaLLM(
 )
 
 embeddings = OllamaEmbeddings(model="nomic-embed-text")
-
-
 
 RAG_PROMPT = PromptTemplate(
     input_variables=["context", "question"],
@@ -41,7 +41,6 @@ Answer:
 """
 )
 
-
 def ask_base_model(question: str) -> str:
     prompt = f"""
 You are a helpful assistant.
@@ -65,20 +64,27 @@ Question:
 """
     return llm.stream(prompt)
 
+def get_vector_store():
+    # Initialize Pinecone
+    PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+    PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME")
+    
+    if not PINECONE_API_KEY or not PINECONE_INDEX_NAME:
+        raise ValueError("Missing Pinecone API keys. Please configure your .env file.")
+        
+    pc = Pinecone(api_key=PINECONE_API_KEY)
+    return PineconeVectorStore(index_name=PINECONE_INDEX_NAME, embedding=embeddings)
+
 
 def ask_rag_model(question: str) -> dict:
-    # Initialize dynamically to ensure we always read the latest database
-    vector_store = Chroma(
-        persist_directory=DB_DIR,
-        embedding_function=embeddings
-    )
+    vector_store = get_vector_store()
     retriever = vector_store.as_retriever(search_kwargs={"k": 4})
     
     docs = retriever.invoke(question)
 
-    context = "\n\n".join(
+    context = "\\n\\n".join(
         [
-            f"Source: {doc.metadata.get('source', 'unknown')}\n{doc.page_content}"
+            f"Source: {doc.metadata.get('source', 'unknown')}\\n{doc.page_content}"
             for doc in docs
         ]
     )
@@ -102,16 +108,13 @@ def ask_rag_model(question: str) -> dict:
 
 def stream_rag_model(question: str) -> dict:
     """Returns a dictionary containing a generator for the streaming answer, plus sources and context."""
-    vector_store = Chroma(
-        persist_directory=DB_DIR,
-        embedding_function=embeddings
-    )
+    vector_store = get_vector_store()
     retriever = vector_store.as_retriever(search_kwargs={"k": 4})
     
     docs = retriever.invoke(question)
 
-    context = "\n\n".join(
-        [f"Document Source: {doc.metadata.get('source', 'Unknown')}\nContent: {doc.page_content}" for doc in docs]
+    context = "\\n\\n".join(
+        [f"Document Source: {doc.metadata.get('source', 'Unknown')}\\nContent: {doc.page_content}" for doc in docs]
     )
 
     chain = RAG_PROMPT | llm | StrOutputParser()
@@ -132,10 +135,13 @@ if __name__ == "__main__":
     print("Base Model Answer:")
     for chunk in stream_base_model(question):
         print(chunk, end="", flush=True)
-    print("\n")
+    print("\\n")
 
     print("RAG Optimized Answer:")
-    result = stream_rag_model(question)
-    for chunk in result["answer_stream"]:
-        print(chunk, end="", flush=True)
-    print("\nSources:", result["sources"])
+    try:
+        result = stream_rag_model(question)
+        for chunk in result["answer_stream"]:
+            print(chunk, end="", flush=True)
+        print("\\nSources:", result["sources"])
+    except Exception as e:
+        print(f"Error connecting to Pinecone: {e}")
