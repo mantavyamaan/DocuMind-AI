@@ -34,7 +34,7 @@ def create_local_vector_database():
     embeddings = OllamaEmbeddings(model="nomic-embed-text")
     vector_store = Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=700, chunk_overlap=120)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=120)
 
     files = [f for f in os.listdir(DATA_DIR) if f.endswith('.txt')]
     if not files:
@@ -90,7 +90,7 @@ def create_cloud_vector_database():
         region_name=AWS_REGION
     )
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=700, chunk_overlap=120)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=120)
 
     try:
         response = s3_client.list_objects_v2(Bucket=S3_BUCKET_NAME)
