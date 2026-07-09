@@ -34,12 +34,12 @@ with st.sidebar:
     st.write("Upload HR policies here. The AI will automatically ingest them.")
     
     if use_cloud:
-        st.info("💡 **Enterprise Cloud Setup**\\nDocuments are now securely managed via Amazon S3. Configure your `.env` file and run `python ingest.py` to stream updates into Pinecone.")
+        st.info("💡 **Enterprise Cloud Setup**\nDocuments are now securely managed via Amazon S3. Configure your `.env` file and run `python ingest.py` to stream updates into Pinecone.")
         st.markdown("---")
         st.subheader("📚 Currently Stored Policies")
         st.write("Fetching policies directly from Amazon S3 is disabled in the UI for performance. Please check your S3 bucket directly.")
     else:
-        st.info("💡 **Local Data Mode**\\nTo ingest files, please place your `.txt` files directly into the `data/` folder on your computer, and run `python ingest.py` in your terminal.")
+        st.info("💡 **Local Data Mode**\nTo ingest files, please place your `.txt` files directly into the `data/` folder on your computer, and run `python ingest.py` in your terminal.")
         st.markdown("---")
         st.subheader("📚 Currently Stored Policies")
         if os.path.exists("data"):
