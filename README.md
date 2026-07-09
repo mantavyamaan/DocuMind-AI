@@ -1,4 +1,4 @@
-# Enterprise Open-Source LLM Optimization (RAG POC)
+# Indian Constitution Helper LLM (RAG POC)
 
 ## Overview
 This Proof of Concept (POC) demonstrates how a general-purpose, open-source Large Language Model (LLM) can be optimized for a specific use case—an **Indian Constitution Helper LLM**. 

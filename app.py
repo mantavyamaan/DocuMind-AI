@@ -5,15 +5,15 @@ import json
 from rag import ask_base_model, ask_rag_model, stream_base_model, stream_rag_model
 
 st.set_page_config(
-    page_title="Open-source LLM RAG POC",
-    page_icon="🤖",
+    page_title="Indian Constitution Helper LLM",
+    page_icon="⚖️",
     layout="wide"
 )
 
 # Detect Mode
 use_cloud = os.getenv("USE_CLOUD_SETUP", "false").lower() == "true"
 
-st.title("Open-source LLM Optimization POC")
+st.title("Indian Constitution Helper LLM")
 st.subheader("Indian Constitution Helper LLM (Qwen + RAG)")
 
 if use_cloud:
