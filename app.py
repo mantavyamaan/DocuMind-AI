@@ -27,20 +27,11 @@ with st.sidebar:
     st.header("📄 Document Management")
     st.write("Upload HR policies here. The AI will automatically ingest them.")
     
-    st.info("💡 **Massive Data Upload Mode**\nTo ingest files (up to 100 GB+), please place your `.txt` files directly into the `data/` folder on your computer, and run `python ingest.py` in your terminal.")
+    st.info("💡 **Enterprise Cloud Setup**\nDocuments are now securely managed via Amazon S3. Configure your `.env` file and run `python ingest.py` to stream updates into Pinecone.")
         
     st.markdown("---")
     st.subheader("📚 Currently Stored Policies")
-    import os
-    if os.path.exists("data"):
-        files = [f for f in os.listdir("data") if f.endswith('.txt')]
-        if files:
-            for f in files:
-                st.write(f"- {f}")
-        else:
-            st.write("No documents in data/ yet.")
-    else:
-        st.write("Directory data/ does not exist.")
+    st.write("Fetching policies directly from Amazon S3 is disabled in the UI for performance. Please check your S3 bucket directly.")
 
     st.markdown("---")
     st.subheader("📜 Chat Logs")
@@ -94,13 +85,20 @@ if st.button("Ask") and question:
 
     with col2:
         st.markdown("### RAG-Optimized LLM")
-        with st.spinner("Retrieving context..."):
-            rag_result = stream_rag_model(question)
-        rag_answer = st.write_stream(rag_result["answer_stream"])
+        with st.spinner("Retrieving context from Pinecone..."):
+            try:
+                rag_result = stream_rag_model(question)
+                rag_answer = st.write_stream(rag_result["answer_stream"])
 
-        st.markdown("### Sources")
-        for source in rag_result["sources"]:
-            st.write(f"- {source}")
+                st.markdown("### Sources")
+                for source in rag_result["sources"]:
+                    st.write(f"- {source}")
+            except ValueError as e:
+                st.error(f"Configuration Error: {e}")
+                st.stop()
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+                st.stop()
 
     with st.expander("Retrieved Context"):
         st.text(rag_result["retrieved_context"])
