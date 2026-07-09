@@ -1,7 +1,7 @@
 # Enterprise Open-Source LLM Optimization (RAG POC)
 
 ## Overview
-This Proof of Concept (POC) demonstrates how a general-purpose, open-source Large Language Model (LLM) can be optimized for a specific enterprise use case—an **HR Policy Assistant**. 
+This Proof of Concept (POC) demonstrates how a general-purpose, open-source Large Language Model (LLM) can be optimized for a specific use case—an **Indian Constitution Helper LLM**. 
 
 Instead of relying on computationally expensive fine-tuning, this project utilizes **Retrieval-Augmented Generation (RAG)** to ground the LLM in internal company documents. This approach significantly improves factual accuracy, reduces hallucinations, allows for explicit source citations, and keeps data private by running the model locally.
 
@@ -89,7 +89,7 @@ python ingest.py
 ```
 
 ### 2. Launch the Web Interface
-Start the Streamlit application to interact with the HR Assistant:
+Start the Streamlit application to interact with the Constitution Helper:
 ```bash
 streamlit run app.py
 ```

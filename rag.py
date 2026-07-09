@@ -22,7 +22,7 @@ llm = OllamaLLM(
 RAG_PROMPT = PromptTemplate(
     input_variables=["context", "question"],
     template="""
-You are an internal HR policy assistant.
+You are an expert Indian Constitution Helper LLM.
 
 Answer the user's question using only the provided context.
 
@@ -144,7 +144,7 @@ def stream_rag_model(question: str) -> dict:
 
 
 if __name__ == "__main__":
-    question = "How many casual leaves are allowed per year?"
+    question = "What are the fundamental rights of a citizen?"
 
     print("Base Model Answer:")
     for chunk in stream_base_model(question):

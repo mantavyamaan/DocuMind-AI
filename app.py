@@ -14,7 +14,7 @@ st.set_page_config(
 use_cloud = os.getenv("USE_CLOUD_SETUP", "false").lower() == "true"
 
 st.title("Open-source LLM Optimization POC")
-st.subheader("HR Policy Assistant using Qwen + RAG")
+st.subheader("Indian Constitution Helper LLM (Qwen + RAG)")
 
 if use_cloud:
     st.success("☁️ **Running in Enterprise Cloud Mode** (Amazon S3 + Pinecone + OpenAI)")
@@ -24,14 +24,14 @@ else:
 st.write(
     """
 This POC compares a base open-source LLM with a RAG-optimized version.
-The optimized version retrieves relevant HR policy documents before answering.
+The optimized version retrieves relevant constitutional documents before answering.
 """
 )
 
 # --- Sidebar: Document Management ---
 with st.sidebar:
     st.header("📄 Document Management")
-    st.write("Upload HR policies here. The AI will automatically ingest them.")
+    st.write("Upload constitutional documents here. The AI will automatically ingest them.")
     
     if use_cloud:
         st.info("💡 **Enterprise Cloud Setup**\nDocuments are now securely managed via Amazon S3. Configure your `.env` file and run `python ingest.py` to stream updates into Pinecone.")
@@ -90,8 +90,8 @@ with st.sidebar:
 
 # --- Main App ---
 question = st.text_input(
-    "Ask an HR policy question:",
-    placeholder="Example: How many casual leaves are allowed per year?"
+    "Ask a question about the Indian Constitution:",
+    placeholder="Example: What are the fundamental rights of a citizen?"
 )
 
 if st.button("Ask") and question:
