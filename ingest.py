@@ -77,7 +77,7 @@ def create_vector_database():
             
             batch_number += 1
 
-    print(f"\\nCloud Vector database ingestion completed! Total chunks indexed: {total_chunks_added}")
+    print(f"\nCloud Vector database ingestion completed! Total chunks indexed: {total_chunks_added}")
 
 if __name__ == "__main__":
     create_vector_database()

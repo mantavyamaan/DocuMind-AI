@@ -82,9 +82,9 @@ def ask_rag_model(question: str) -> dict:
     
     docs = retriever.invoke(question)
 
-    context = "\\n\\n".join(
+    context = "\n\n".join(
         [
-            f"Source: {doc.metadata.get('source', 'unknown')}\\n{doc.page_content}"
+            f"Source: {doc.metadata.get('source', 'unknown')}\n{doc.page_content}"
             for doc in docs
         ]
     )
@@ -113,8 +113,8 @@ def stream_rag_model(question: str) -> dict:
     
     docs = retriever.invoke(question)
 
-    context = "\\n\\n".join(
-        [f"Document Source: {doc.metadata.get('source', 'Unknown')}\\nContent: {doc.page_content}" for doc in docs]
+    context = "\n\n".join(
+        [f"Document Source: {doc.metadata.get('source', 'Unknown')}\nContent: {doc.page_content}" for doc in docs]
     )
 
     chain = RAG_PROMPT | llm | StrOutputParser()
@@ -135,13 +135,13 @@ if __name__ == "__main__":
     print("Base Model Answer:")
     for chunk in stream_base_model(question):
         print(chunk, end="", flush=True)
-    print("\\n")
+    print("\n")
 
     print("RAG Optimized Answer:")
     try:
         result = stream_rag_model(question)
         for chunk in result["answer_stream"]:
             print(chunk, end="", flush=True)
-        print("\\nSources:", result["sources"])
+        print("\nSources:", result["sources"])
     except Exception as e:
         print(f"Error connecting to Pinecone: {e}")

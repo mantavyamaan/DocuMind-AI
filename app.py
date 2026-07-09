@@ -20,7 +20,6 @@ The optimized version retrieves relevant HR policy documents before answering.
 """
 )
 
-from ingest import create_vector_database
 
 # --- Sidebar: Document Management ---
 with st.sidebar:
