@@ -8,7 +8,7 @@ Instead of relying on computationally expensive fine-tuning, this project utiliz
 ## Features
 * **Local Open-Source AI:** Uses `Qwen2.5:7b` via Ollama for fast, secure, and private on-device inference.
 * **Real-time UI Streaming:** Answers are streamed word-by-word into the UI (just like ChatGPT) for zero perceived latency.
-* **Dynamic Document Retrieval (RAG):** Upload `.txt` policy files directly through the web UI. They are instantly stored in an SQLite database and ingested into a local ChromaDB vector database.
+* **Massive Data Pipeline (100 GB+):** Bypasses web-browser limits using a robust background ingestion engine that streams text directly from a local `data/` drop-zone into ChromaDB without crashing RAM.
 * **Chat Logging:** All questions, generated answers, and source citations are silently logged to an SQLite database (`chat_history.db`) for auditing.
 * **Source Citation:** The optimized model explicitly cites the exact internal document used to generate its answer.
 * **Hallucination Mitigation:** Strict prompt engineering ensures the model refuses to answer if the information is not present in the internal documents.
@@ -73,9 +73,10 @@ streamlit run app.py
 *This will open a browser window (usually at `http://localhost:8501`).*
 
 ### How to Use
-1. **Upload Policies:** Open the sidebar on the left and upload your HR policy `.txt` files. They will be automatically saved to the SQLite database and ingested into the AI's knowledge base.
-2. **Ask Questions:** Type a question in the main chat input. The app will show you how the Base LLM answers versus the RAG-optimized LLM.
-3. **View Logs:** All chats are securely logged in the local `chat_history.db` file.
+1. **Upload Policies (100 GB Support):** Place your massive `.txt` policy files directly into the `data/` folder in this repository. 
+2. **Ingest the Data:** Open your terminal and run `python ingest.py`. This script is built to safely process files in small batches to prevent Memory (RAM) crashes.
+3. **Ask Questions:** Type a question in the main chat input of the Streamlit app.
+4. **View Logs:** All chats are securely logged in the local `chat_history.db` file.
 
 ---
 

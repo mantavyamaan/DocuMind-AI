@@ -27,27 +27,20 @@ with st.sidebar:
     st.header("📄 Document Management")
     st.write("Upload HR policies here. The AI will automatically ingest them.")
     
-    uploaded_file = st.file_uploader("Upload a .txt policy", type=["txt"])
-    if uploaded_file is not None:
-        file_hash = hash(uploaded_file.getvalue())
-        if st.session_state.get("last_uploaded_hash") != file_hash:
-            filename = uploaded_file.name
-            content = uploaded_file.getvalue().decode("utf-8")
-            
-            with st.spinner("Saving and indexing document..."):
-                db.save_document(filename, content)
-                create_vector_database()
-            st.success(f"Successfully added {filename}!")
-            st.session_state["last_uploaded_hash"] = file_hash
+    st.info("💡 **Massive Data Upload Mode**\nTo ingest files (up to 100 GB+), please place your `.txt` files directly into the `data/` folder on your computer, and run `python ingest.py` in your terminal.")
         
     st.markdown("---")
     st.subheader("📚 Currently Stored Policies")
-    docs = db.get_all_documents()
-    if docs:
-        for doc in docs:
-            st.write(f"- {doc['filename']}")
+    import os
+    if os.path.exists("data"):
+        files = [f for f in os.listdir("data") if f.endswith('.txt')]
+        if files:
+            for f in files:
+                st.write(f"- {f}")
+        else:
+            st.write("No documents in data/ yet.")
     else:
-        st.write("No documents stored yet.")
+        st.write("Directory data/ does not exist.")
 
     st.markdown("---")
     st.subheader("📜 Chat Logs")

@@ -1,66 +1,62 @@
 import os
-import shutil
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
-import db
-
 
 DB_DIR = "vector_db"
+DATA_DIR = "data"
 
-
-def load_documents():
-    db_docs = db.get_all_documents()
-    documents = []
-
-    for item in db_docs:
-        doc = Document(
-            page_content=item["content"],
-            metadata={"source": item["filename"]}
-        )
-        documents.append(doc)
-
-    return documents
-
+def process_file_in_chunks(filepath, chunk_size=5000000):
+    """Generator to read a massive file in safe chunks to prevent OOM errors."""
+    with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+        while True:
+            text = f.read(chunk_size)
+            if not text:
+                break
+            yield text
 
 def create_vector_database():
-    # Clear existing vector database to rebuild it dynamically
-    embeddings = OllamaEmbeddings(model="nomic-embed-text")
-    if os.path.exists(DB_DIR):
-        try:
-            vector_store = Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
-            vector_store.delete_collection()
-        except Exception as e:
-            print(f"Warning: Could not delete old collection: {e}")
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+        print(f"Created {DATA_DIR}/ directory. Please place your large files there.")
+        return
 
-    documents = load_documents()
+    embeddings = OllamaEmbeddings(model="nomic-embed-text")
     
-    if not documents:
-        print("No documents found in the database. Vector DB not created.")
-        return None
+    # Do not delete collection automatically, allow appending for massive datasets
+    vector_store = Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=700,
         chunk_overlap=120
     )
 
-    chunks = splitter.split_documents(documents)
+    files = [f for f in os.listdir(DATA_DIR) if f.endswith('.txt')]
+    if not files:
+        print(f"No .txt files found in {DATA_DIR}/ directory.")
+        return
 
-    embeddings = OllamaEmbeddings(model="nomic-embed-text")
+    total_chunks_added = 0
 
-    vector_store = Chroma.from_documents(
-        documents=chunks,
-        embedding=embeddings,
-        persist_directory=DB_DIR
-    )
+    for filename in files:
+        filepath = os.path.join(DATA_DIR, filename)
+        print(f"Processing {filename}...")
+        
+        # Read file in 5MB chunks to prevent memory crash
+        batch_number = 1
+        for text_chunk in process_file_in_chunks(filepath):
+            doc = Document(page_content=text_chunk, metadata={"source": filename})
+            split_chunks = splitter.split_documents([doc])
+            
+            if split_chunks:
+                vector_store.add_documents(split_chunks)
+                total_chunks_added += len(split_chunks)
+                print(f"  -> Added batch {batch_number} ({len(split_chunks)} chunks)")
+            
+            batch_number += 1
 
-    print(f"Loaded {len(documents)} documents from SQLite.")
-    print(f"Created {len(chunks)} chunks.")
-    print("Vector database rebuilt successfully.")
-
-    return vector_store
-
+    print(f"\\nVector database ingestion completed! Total chunks indexed: {total_chunks_added}")
 
 if __name__ == "__main__":
     create_vector_database()
