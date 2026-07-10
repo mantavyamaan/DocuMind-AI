@@ -145,12 +145,14 @@ with st.sidebar:
         st.caption("Run evaluate.py to generate matrix.")
 
 # --- Main App ---
-question = st.text_input(
-    "Ask a question about the Indian Constitution:",
-    placeholder="Example: What are the fundamental rights of a citizen?"
-)
+with st.form("chat_form"):
+    question = st.text_input(
+        "Ask a question about the Indian Constitution:",
+        placeholder="Example: What are the fundamental rights of a citizen?"
+    )
+    submitted = st.form_submit_button("Ask")
 
-if st.button("Ask") and question:
+if submitted and question:
     col1, col2 = st.columns(2)
 
     with col1:
