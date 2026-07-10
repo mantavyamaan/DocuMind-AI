@@ -5,42 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const emptyState = document.getElementById('emptyState');
     const sendBtn = document.getElementById('sendBtn');
 
-    // Hardcoded responses to simulate the RAG model
-    const mockResponses = [
-        {
-            keywords: ['article 14', 'equality'],
-            base: "Article 14 is a part of the Indian Constitution, but without further context, I can tell you it broadly deals with equality. It states that the State shall not deny to any person equality before the law within the territory of India. However, there are many caveats and legal interpretations of this in various contexts.",
-            rag: "Article 14 of the Constitution guarantees equality before law and equal protection of the laws to all persons within the territory of India. It prohibits unreasonable discrimination by the State.",
-            source: "constitution.txt"
-        },
-        {
-            keywords: ['fundamental duties', 'duty'],
-            base: "Fundamental duties are moral obligations of citizens to help promote a spirit of patriotism and uphold the unity of India. These were added by the 42nd Amendment in 1976. Some of them include respecting the national flag and anthem, protecting the natural environment, and developing scientific temper.",
-            rag: "The Fundamental Duties mentioned in the Constitution include abiding by the Constitution, respecting its ideals and institutions, the National Flag and the National Anthem, and to uphold and protect the sovereignty, unity, and integrity of India (Article 51A).",
-            source: "constitution.txt"
-        },
-        {
-            keywords: ['president', 'age', 'qualifications'],
-            base: "To be the President of India, you must be a citizen of India and have completed a certain age, usually 35 years. You must also be qualified for election as a member of the House of the People.",
-            rag: "To be eligible for election as President of India, a person must have completed thirty-five years of age (Article 58).",
-            source: "constitution.txt"
-        }
-    ];
-
-    const defaultResponse = {
-        base: "I am an AI, and I can try to answer your question based on my general pre-training data. However, I might not be fully accurate regarding specific constitutional articles without access to the actual documents.",
-        rag: "I could not find specific information answering this question in the provided constitutional documents.",
-        source: "none"
+    const demoResponse = {
+        base: "This is a static portfolio demo website designed to showcase the UI. The actual backend AI model is disconnected to save on cloud GPU costs.",
+        rag: "To experience the fully functional Indian Constitution Helper LLM, please visit the project's GitHub repository. Follow the installation steps outlined in the README.md file to run the open-source model locally on your own machine!",
+        source: "github.com/mantavyamaan/open-source-llm-rag-poc"
     };
 
     function findResponse(query) {
-        const lowerQuery = query.toLowerCase();
-        for (let r of mockResponses) {
-            if (r.keywords.some(kw => lowerQuery.includes(kw))) {
-                return r;
-            }
-        }
-        return defaultResponse;
+        return demoResponse;
     }
 
     function appendUserMessage(text) {
