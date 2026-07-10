@@ -1,8 +1,16 @@
 import os
 import boto3
+import tempfile
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+from langchain_community.document_loaders import (
+    PyPDFLoader,
+    UnstructuredPowerPointLoader,
+    UnstructuredWordDocumentLoader,
+    TextLoader
+)
 
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
@@ -15,14 +23,26 @@ load_dotenv()
 DB_DIR = "vector_db"
 DATA_DIR = "data"
 
-def process_file_in_chunks_local(filepath, chunk_size=5000000):
-    """Generator to read a massive file in safe chunks to prevent OOM errors."""
-    with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
-        while True:
-            text = f.read(chunk_size)
-            if not text:
-                break
-            yield text
+def load_document(filepath):
+    """Routes the file to the correct document loader based on extension."""
+    ext = os.path.splitext(filepath)[1].lower()
+    try:
+        if ext == '.pdf':
+            loader = PyPDFLoader(filepath)
+        elif ext == '.pptx':
+            loader = UnstructuredPowerPointLoader(filepath)
+        elif ext == '.docx':
+            loader = UnstructuredWordDocumentLoader(filepath)
+        elif ext == '.txt':
+            loader = TextLoader(filepath, encoding='utf-8')
+        else:
+            print(f"Unsupported file extension {ext} for {filepath}")
+            return []
+        
+        return loader.load()
+    except Exception as e:
+        print(f"Error loading {filepath}: {e}")
+        return []
 
 def create_local_vector_database():
     print("Running in LOCAL MODE...")
@@ -36,9 +56,9 @@ def create_local_vector_database():
 
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=120)
 
-    files = [f for f in os.listdir(DATA_DIR) if f.endswith('.txt')]
+    files = [f for f in os.listdir(DATA_DIR) if f.lower().endswith(('.txt', '.pdf', '.docx', '.pptx'))]
     if not files:
-        print(f"No .txt files found in {DATA_DIR}/ directory.")
+        print(f"No supported documents found in {DATA_DIR}/ directory.")
         return
 
     total_chunks_added = 0
@@ -47,21 +67,23 @@ def create_local_vector_database():
         filepath = os.path.join(DATA_DIR, filename)
         print(f"Processing {filename} locally...")
         
-        batch_number = 1
-        for text_chunk in process_file_in_chunks_local(filepath):
-            doc = Document(page_content=text_chunk, metadata={"source": filename})
-            split_chunks = splitter.split_documents([doc])
+        docs = load_document(filepath)
+        if not docs:
+            continue
             
-            if split_chunks:
-                BATCH_SIZE = 100
-                for i in range(0, len(split_chunks), BATCH_SIZE):
-                    batch = split_chunks[i:i + BATCH_SIZE]
-                    vector_store.add_documents(batch)
-                    
-                total_chunks_added += len(split_chunks)
-                print(f"  -> Added batch {batch_number} ({len(split_chunks)} chunks)")
+        for doc in docs:
+            doc.metadata["source"] = filename
             
-            batch_number += 1
+        split_chunks = splitter.split_documents(docs)
+        
+        if split_chunks:
+            BATCH_SIZE = 100
+            for i in range(0, len(split_chunks), BATCH_SIZE):
+                batch = split_chunks[i:i + BATCH_SIZE]
+                vector_store.add_documents(batch)
+                
+            total_chunks_added += len(split_chunks)
+            print(f"  -> Added {len(split_chunks)} chunks")
 
     print(f"\nLocal Vector database ingestion completed! Total chunks indexed: {total_chunks_added}")
 
@@ -98,13 +120,13 @@ def create_cloud_vector_database():
 
     try:
         response = s3_client.list_objects_v2(Bucket=S3_BUCKET_NAME)
-        files = [item['Key'] for item in response.get('Contents', []) if item['Key'].endswith('.txt')]
+        files = [item['Key'] for item in response.get('Contents', []) if item['Key'].lower().endswith(('.txt', '.pdf', '.docx', '.pptx'))]
     except Exception as e:
         print(f"Error accessing S3 bucket: {e}")
         return
 
     if not files:
-        print(f"No .txt files found in S3 Bucket: {S3_BUCKET_NAME}")
+        print(f"No supported documents found in S3 Bucket: {S3_BUCKET_NAME}")
         return
 
     total_chunks_added = 0
@@ -113,24 +135,32 @@ def create_cloud_vector_database():
         print(f"Streaming {filename} from Amazon S3...")
         
         s3_object = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=filename)
-        body = s3_object['Body']
+        body = s3_object['Body'].read()
         
-        batch_number = 1
-        for text_chunk_bytes in body.iter_chunks(chunk_size=5000000):
-            text_chunk = text_chunk_bytes.decode('utf-8', errors='ignore')
-            doc = Document(page_content=text_chunk, metadata={"source": filename})
-            split_chunks = splitter.split_documents([doc])
+        ext = os.path.splitext(filename)[1].lower()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_file:
+            tmp_file.write(body)
+            tmp_filepath = tmp_file.name
             
-            if split_chunks:
-                BATCH_SIZE = 100
-                for i in range(0, len(split_chunks), BATCH_SIZE):
-                    batch = split_chunks[i:i + BATCH_SIZE]
-                    vector_store.add_documents(batch)
-                    
-                total_chunks_added += len(split_chunks)
-                print(f"  -> Uploaded batch {batch_number} to Pinecone ({len(split_chunks)} chunks)")
+        docs = load_document(tmp_filepath)
+        os.remove(tmp_filepath)
+        
+        if not docs:
+            continue
             
-            batch_number += 1
+        for doc in docs:
+            doc.metadata["source"] = filename
+            
+        split_chunks = splitter.split_documents(docs)
+        
+        if split_chunks:
+            BATCH_SIZE = 100
+            for i in range(0, len(split_chunks), BATCH_SIZE):
+                batch = split_chunks[i:i + BATCH_SIZE]
+                vector_store.add_documents(batch)
+                
+            total_chunks_added += len(split_chunks)
+            print(f"  -> Uploaded {len(split_chunks)} chunks to Pinecone")
 
     print(f"\nCloud Vector database ingestion completed! Total chunks indexed: {total_chunks_added}")
 

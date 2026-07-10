@@ -11,3 +11,6 @@ boto3
 pinecone-client
 langchain-pinecone
 langchain-openai
+python-pptx
+python-docx
+unstructured

@@ -40,7 +40,7 @@ with st.sidebar:
         st.write("Fetching documents directly from Amazon S3 is disabled in the UI for performance. Please check your S3 bucket directly.")
     else:
         
-        uploaded_file = st.file_uploader("Upload Constitutional Document", type=["txt"])
+        uploaded_file = st.file_uploader("Upload Constitutional Document", type=["txt", "pdf", "docx", "pptx"])
         if uploaded_file is not None:
             if not os.path.exists("data"):
                 os.makedirs("data")
@@ -51,7 +51,7 @@ with st.sidebar:
         st.markdown("---")
         st.subheader("📚 Currently Stored Documents")
         if os.path.exists("data"):
-            files = [f for f in os.listdir("data") if f.endswith('.txt')]
+            files = [f for f in os.listdir("data") if f.lower().endswith(('.txt', '.pdf', '.docx', '.pptx'))]
             if files:
                 for f in files:
                     st.write(f"- {f}")
