@@ -19,15 +19,17 @@
             <div class="sidebar-section">
                 <h3>📄 Document Management</h3>
                 <p class="section-desc">Upload constitutional documents here.</p>
-                <div class="upload-box">
+                <div class="upload-box" id="uploadBox">
+                    <input type="file" id="fileUpload" accept=".txt" style="display: none;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                     <span>Upload .txt File</span>
                 </div>
+                <div id="uploadSuccess" style="display: none; margin-top: 12px; padding: 12px; background: rgba(0, 204, 150, 0.1); border: 1px solid rgba(0, 204, 150, 0.2); border-radius: 6px; color: var(--success); font-size: 0.85rem;"></div>
             </div>
 
             <div class="sidebar-section divider">
                 <h3>📚 Currently Stored</h3>
-                <ul class="file-list">
+                <ul class="file-list" id="fileList">
                     <li><span class="file-icon">📄</span> constitution.txt</li>
                 </ul>
             </div>

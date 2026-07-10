@@ -5,11 +5,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const emptyState = document.getElementById('emptyState');
     const sendBtn = document.getElementById('sendBtn');
 
+    // File upload elements
+    const uploadBox = document.getElementById('uploadBox');
+    const fileUpload = document.getElementById('fileUpload');
+    const uploadSuccess = document.getElementById('uploadSuccess');
+    const fileList = document.getElementById('fileList');
+
     const demoResponse = {
         base: "This is a static portfolio demo website designed to showcase the UI. The actual backend AI model is disconnected to save on cloud GPU costs.",
         rag: "To experience the fully functional Indian Constitution Helper LLM, please visit the project's GitHub repository. Follow the installation steps outlined in the README.md file to run the open-source model locally on your own machine!",
         source: "github.com/mantavyamaan/open-source-llm-rag-poc"
     };
+
+    // File upload simulation logic
+    if (uploadBox && fileUpload) {
+        uploadBox.addEventListener('click', () => {
+            fileUpload.click();
+        });
+
+        fileUpload.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                const fileName = e.target.files[0].name;
+                
+                // Show success message
+                uploadSuccess.innerHTML = `✅ Saved <code>${fileName}</code> to data/ folder! (Mock Demo)`;
+                uploadSuccess.style.display = 'block';
+
+                // Add to file list if not already there
+                const existingFiles = Array.from(fileList.querySelectorAll('li')).map(li => li.innerText.replace('📄', '').trim());
+                if (!existingFiles.includes(fileName)) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="file-icon">📄</span> ${fileName}`;
+                    fileList.appendChild(li);
+                }
+
+                // Reset input so the same file can be selected again if needed
+                fileUpload.value = '';
+            }
+        });
+    }
 
     function findResponse(query) {
         return demoResponse;
