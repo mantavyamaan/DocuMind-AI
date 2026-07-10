@@ -6,19 +6,21 @@ This Proof of Concept (POC) demonstrates how a general-purpose, open-source Larg
 Instead of relying on computationally expensive fine-tuning, this project utilizes **Retrieval-Augmented Generation (RAG)** to ground the LLM in constitutional and legal documents. This approach significantly improves factual accuracy, reduces hallucinations, allows for explicit source citations, and keeps data private by running the model locally.
 
 ## Features
+* **Multi-Modal Document Parsing:** Seamlessly ingest and parse complex file formats including **PDFs (`.pdf`)**, **Word Documents (`.docx`)**, **PowerPoint (`.pptx`)**, and plain text (`.txt`).
+* **Automated UI Ingestion:** Directly upload documents via the Streamlit UI. The backend automatically parses, chunks, and indexes the documents in real-time without needing terminal commands.
 * **Dual-Mode Architecture:** Run the entire system locally on your laptop, or instantly flip a switch to process massive 100 GB+ datasets using Enterprise Cloud infrastructure (Amazon S3 + Pinecone + OpenAI Embeddings).
 * **Local Open-Source AI:** Uses `Qwen2.5:7b` via Ollama for fast, secure, and private on-device text generation.
 * **Real-time UI Streaming:** Answers are streamed word-by-word into the UI (just like ChatGPT) for zero perceived latency.
-* **Chat Logging:** All questions, generated answers, and source citations are silently logged to an SQLite database (`chat_history.db`) for auditing.
+* **Strict Guardrails & Graceful Pivoting:** The model securely rejects irrelevant or nuisance questions, and intelligently pivots to related topics if exact constitutional articles are missing.
 * **Source Citation:** The optimized model explicitly cites the exact constitutional document used to generate its answer.
-* **Hallucination Mitigation:** Strict prompt engineering ensures the model refuses to answer if the information is not present in the provided legal documents.
+* **Chat Logging:** All questions, generated answers, and source citations are silently logged to an SQLite database (`chat_history.db`) for auditing.
 * **Automated Evaluation Matrix:** Includes a benchmarking script that tests for Factual Accuracy, Hallucination Prevention, and Source Grounding. The results are displayed live in a beautiful matrix in the Streamlit UI.
-* **Interactive UI:** Built with Streamlit for a clean, user-friendly chat interface with a sidebar for Document Management and Live Analytics.
 
 ## Tech Stack
 * **Language:** Python 3.10+
 * **LLM Engine:** Ollama (`qwen2.5:7b`)
 * **Orchestration:** LangChain
+* **Document Parsing:** `pypdf`, `python-docx`, `python-pptx`, `unstructured`
 * **Frontend:** Streamlit
 * **Local Mode Stack:** ChromaDB, `nomic-embed-text`
 * **Enterprise Cloud Stack:** Amazon S3, Pinecone, OpenAI (`text-embedding-3-small`)
@@ -70,30 +72,27 @@ Copy the `.env.example` file to a new file named `.env`:
 ### Option A: Local Mode (Default)
 Runs 100% locally on your laptop using ChromaDB and Ollama.
 * Leave `USE_CLOUD_SETUP=false` in your `.env` file.
-* Put your `.txt` files in the local `data/` folder.
+* Upload documents directly via the Streamlit UI.
 
 ### Option B: Enterprise Cloud Mode (For 100 GB+ Datasets)
 Bypasses local hardware limits by streaming from Amazon S3, embedding with OpenAI, and storing in Pinecone.
 * Set `USE_CLOUD_SETUP=true` in your `.env` file.
 * Fill in your AWS, Pinecone, and OpenAI API keys in the `.env` file.
-* Put your `.txt` files in your Amazon S3 Bucket.
+* Upload documents directly via the Streamlit UI (which will automatically pipe them into S3).
 
 ---
 
 ## 🏃‍♂️ Running the Application
 
-### 1. Ingest the Data
-Open your terminal and run the ingestion pipeline. It will automatically detect whether you are in Local or Cloud mode and process your data safely in batches.
-```bash
-python ingest.py
-```
-
-### 2. Launch the Web Interface
+### 1. Launch the Web Interface
 Start the Streamlit application to interact with the Constitution Helper:
 ```bash
 streamlit run app.py
 ```
 *This will open a browser window (usually at `http://localhost:8501`).*
+
+### 2. Ingest the Data (Fully Automated)
+You no longer need to run manual ingestion scripts! Simply open the Web Interface, look for the **Document Management** sidebar, and upload a `.pdf`, `.docx`, `.pptx`, or `.txt` file. The backend will instantly process and index your file in real-time.
 
 ### 3. View Logs
 All chats are securely logged in the local `chat_history.db` file.
