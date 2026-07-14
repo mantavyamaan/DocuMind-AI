@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const div = document.createElement('div');
         div.className = 'message assistant loading-msg';
         div.innerHTML = `
-            <div class="msg-label">🤖 Constitution AI (Generating...)</div>
+            <div class="msg-label">🤖 DocuMind AI (Generating...)</div>
             <div class="msg-content" style="padding: 10px 20px;">
                 <div class="typing-indicator">
                     <span></span><span></span><span></span>
@@ -98,16 +98,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function replaceSkeletonWithResponse(skeletonElement, responseObj) {
         skeletonElement.classList.remove('loading-msg');
         skeletonElement.innerHTML = `
-            <div class="msg-label">🤖 Constitution AI</div>
+            <div class="msg-label">🤖 DocuMind AI</div>
             <div class="split-response">
-                <div class="model-col">
-                    <h4>Base Open-source LLM</h4>
-                    <div class="content-base"></div>
-                </div>
                 <div class="model-col" style="border-color: rgba(0, 204, 150, 0.4); box-shadow: 0 4px 20px rgba(0, 204, 150, 0.05);">
                     <h4 style="color: #00cc96;">RAG-Optimized LLM</h4>
                     <div class="content-rag"></div>
                     ${responseObj.source !== 'none' ? `<div class="source-box"><strong>Source:</strong> ${responseObj.source}</div>` : ''}
+                </div>
+                <div class="model-col">
+                    <h4>Base Open-source LLM</h4>
+                    <div class="content-base"></div>
                 </div>
             </div>
         `;
@@ -118,15 +118,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (sourceBox) sourceBox.style.opacity = '0';
 
-        // Animate typing for Base
-        simulateTyping(baseContainer, responseObj.base, 10, () => {
-            // Then animate typing for RAG
-            simulateTyping(ragContainer, responseObj.rag, 15, () => {
-                if(sourceBox) {
-                    sourceBox.style.transition = 'opacity 0.5s ease';
-                    sourceBox.style.opacity = '1';
-                }
-            });
+        // Animate typing for RAG first (since it's on the left)
+        simulateTyping(ragContainer, responseObj.rag, 15, () => {
+            if(sourceBox) {
+                sourceBox.style.transition = 'opacity 0.5s ease';
+                sourceBox.style.opacity = '1';
+            }
+            // Then animate typing for Base
+            simulateTyping(baseContainer, responseObj.base, 10);
         });
     }
 
