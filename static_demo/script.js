@@ -1,180 +1,212 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const chatForm = document.getElementById('chatForm');
-    const userInput = document.getElementById('userInput');
-    const chatHistory = document.getElementById('chatHistory');
-    const emptyState = document.getElementById('emptyState');
-    const sendBtn = document.getElementById('sendBtn');
-
-    // File upload elements
-    const uploadBox = document.getElementById('uploadBox');
-    const fileUpload = document.getElementById('fileUpload');
-    const uploadSuccess = document.getElementById('uploadSuccess');
-    const fileList = document.getElementById('fileList');
-
-    const demoResponse = {
-        base: "This is a static portfolio demo website designed to showcase the UI. The actual backend AI model is disconnected to save on cloud GPU costs.",
-        rag: "To experience the fully functional DocuMind AI, please visit the project's GitHub repository. Follow the installation steps outlined in the README.md file to run the open-source model locally on your own machine!",
-        source: "github.com/mantavyamaan/DocuMind-AI"
-    };
-
-    // File upload simulation logic
-    if (uploadBox && fileUpload) {
-        uploadBox.addEventListener('click', () => {
-            fileUpload.click();
-        });
-
-        fileUpload.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files.length > 0) {
-                const fileName = e.target.files[0].name;
-                
-                // Show success message
-                uploadSuccess.innerHTML = `✅ Saved <code>${fileName}</code> to data/ folder! (Mock Demo)`;
-                uploadSuccess.style.display = 'block';
-
-                // Add to file list if not already there
-                const existingFiles = Array.from(fileList.querySelectorAll('li')).map(li => li.innerText.replace('📄', '').trim());
-                if (!existingFiles.includes(fileName)) {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<span class="file-icon">📄</span> ${fileName}`;
-                    fileList.appendChild(li);
-                }
-
-                // Reset input so the same file can be selected again if needed
-                fileUpload.value = '';
-            }
-        });
-    }
-
-    function findResponse(query) {
-        return demoResponse;
-    }
-
-    function appendUserMessage(text) {
-        if (emptyState) emptyState.style.display = 'none';
-        
-        const div = document.createElement('div');
-        div.className = 'message user';
-        div.innerHTML = `
-            <div class="msg-label">👤 You</div>
-            <div class="msg-content">${escapeHTML(text)}</div>
-        `;
-        chatHistory.appendChild(div);
-        scrollToBottom();
-    }
-
-    function appendAssistantSkeleton() {
-        const div = document.createElement('div');
-        div.className = 'message assistant loading-msg';
-        div.innerHTML = `
-            <div class="msg-label">🤖 DocuMind AI (Generating...)</div>
-            <div class="msg-content" style="padding: 10px 20px;">
-                <div class="typing-indicator">
-                    <span></span><span></span><span></span>
-                </div>
-            </div>
-        `;
-        chatHistory.appendChild(div);
-        scrollToBottom();
-        return div;
-    }
-
-    function simulateTyping(element, text, speed = 20, callback) {
-        let i = 0;
-        element.innerHTML = '';
-        
-        function typeWriter() {
-            if (i < text.length) {
-                element.innerHTML += text.charAt(i);
-                i++;
-                scrollToBottom();
-                setTimeout(typeWriter, speed);
-            } else if (callback) {
-                callback();
-            }
+document.addEventListener("DOMContentLoaded", () => {
+    
+    // --- Elements ---
+    const fileInput = document.getElementById("fileInput");
+    const uploadZone = document.getElementById("uploadZone");
+    const uploadStatus = document.getElementById("uploadStatus");
+    
+    const chatForm = document.getElementById("chatForm");
+    const questionInput = document.getElementById("questionInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const ragChatBox = document.getElementById("ragChatBox");
+    const baseChatBox = document.getElementById("baseChatBox");
+    const loadHistoryBtn = document.getElementById("loadHistoryBtn");
+    
+    // --- Load/Hide History Logic (Mocked) ---
+    let historyLoaded = false;
+    
+    function toggleHistory() {
+        if (historyLoaded) {
+            // Hide history
+            ragChatBox.innerHTML = '<div class="message system-msg">Hello! I am DocuMind AI. Upload documents and ask me questions about them. I will only answer based on your securely provided knowledge.</div>';
+            baseChatBox.innerHTML = '<div class="message system-msg">I am the standard base model. I answer purely based on my general pre-training, without access to your private documents.</div>';
+            loadHistoryBtn.innerText = "Load Past Chats";
+            historyLoaded = false;
+            return;
         }
-        typeWriter();
-    }
-
-    function replaceSkeletonWithResponse(skeletonElement, responseObj) {
-        skeletonElement.classList.remove('loading-msg');
-        skeletonElement.innerHTML = `
-            <div class="msg-label">🤖 DocuMind AI</div>
-            <div class="split-response">
-                <div class="model-col" style="border-color: rgba(0, 204, 150, 0.4); box-shadow: 0 4px 20px rgba(0, 204, 150, 0.05);">
-                    <h4 style="color: #00cc96;">RAG-Optimized LLM</h4>
-                    <div class="content-rag"></div>
-                    ${responseObj.source !== 'none' ? `<div class="source-box"><strong>Source:</strong> ${responseObj.source}</div>` : ''}
-                </div>
-                <div class="model-col">
-                    <h4>Base Open-source LLM</h4>
-                    <div class="content-base"></div>
-                </div>
-            </div>
-        `;
-
-        const baseContainer = skeletonElement.querySelector('.content-base');
-        const ragContainer = skeletonElement.querySelector('.content-rag');
-        const sourceBox = skeletonElement.querySelector('.source-box');
         
-        if (sourceBox) sourceBox.style.opacity = '0';
-
-        // Animate typing for RAG first (since it's on the left)
-        simulateTyping(ragContainer, responseObj.rag, 15, () => {
-            if(sourceBox) {
-                sourceBox.style.transition = 'opacity 0.5s ease';
-                sourceBox.style.opacity = '1';
-            }
-            // Then animate typing for Base
-            simulateTyping(baseContainer, responseObj.base, 10);
-        });
-    }
-
-    chatForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const text = userInput.value.trim();
-        if (!text) return;
-
-        // Disable input
-        userInput.value = '';
-        userInput.disabled = true;
-        sendBtn.disabled = true;
-
-        // Add user msg
-        appendUserMessage(text);
+        loadHistoryBtn.innerText = "Loading...";
+        loadHistoryBtn.disabled = true;
         
-        // Find answer
-        const answer = findResponse(text);
-
-        // Add skeleton
-        const skeleton = appendAssistantSkeleton();
-
-        // Simulate network delay
+        // Mock delay for UI showcasing
         setTimeout(() => {
-            replaceSkeletonWithResponse(skeleton, answer);
+            ragChatBox.innerHTML = "";
+            baseChatBox.innerHTML = "";
             
-            // Re-enable after a short delay mimicking streaming finish
-            setTimeout(() => {
-                userInput.disabled = false;
-                sendBtn.disabled = false;
-                userInput.focus();
-            }, 3000);
+            // Mock History Data
+            const mockHistory = [
+                {
+                    question: "What is the summary?",
+                    rag_answer: "The system uses a 'RAG' architecture to act as an expert on internal HR policies. Instead of retraining a massive AI model, it searches actual policy documents in real-time to provide accurate answers with source citations. Everything runs locally to ensure data privacy and security.",
+                    base_answer: "I am the standard base model. I answer purely based on my general pre-training, without access to your private documents. Could you provide the text you would like summarized?",
+                    sources: "project_overview.txt",
+                    context: "This document provides an overview of a Proof of Concept (POC) for an Enterprise HR Policy Assistant using a 'RAG' architecture. The assistant uses a locally running LLM engine, LangChain for orchestration, and ChromaDB as the database to answer employee questions by searching through actual policy documents in real-time. The workflow involves document ingestion where large policies are loaded and broken down into smaller chunks before the AI can provide answers with exact source citations."
+                }
+            ];
             
+            mockHistory.forEach(item => {
+                // Populate RAG
+                appendMessage(ragChatBox, item.question, "user-msg");
+                let ragAiHtml = item.rag_answer.replace(/\n/g, "<br>");
+                if (item.sources) {
+                    const sourcesList = item.sources.split(", ").map(s => `<li>${s}</li>`).join("");
+                    const ctx = item.context.replace(/\n/g, "<br>");
+                    ragAiHtml += `
+                    <details class="sources-expander">
+                        <summary>View Source Documents & Context</summary>
+                        <div class="expander-content">
+                            <strong>Sources:</strong>
+                            <ul>${sourcesList}</ul>
+                            <strong>Retrieved Context:</strong>
+                            <div>${ctx}</div>
+                        </div>
+                    </details>`;
+                }
+                const ragDiv = appendMessage(ragChatBox, "", "ai-msg");
+                ragDiv.innerHTML = ragAiHtml;
+                
+                // Populate Base
+                appendMessage(baseChatBox, item.question, "user-msg");
+                const baseDiv = appendMessage(baseChatBox, "", "ai-msg");
+                baseDiv.innerHTML = item.base_answer.replace(/\n/g, "<br>");
+            });
+            
+            ragChatBox.scrollTop = ragChatBox.scrollHeight;
+            baseChatBox.scrollTop = baseChatBox.scrollHeight;
+            
+            loadHistoryBtn.innerText = "Hide Past Chats";
+            historyLoaded = true;
+            loadHistoryBtn.disabled = false;
         }, 800);
+    }
+    
+    if (loadHistoryBtn) {
+        loadHistoryBtn.addEventListener("click", toggleHistory);
+    }
+    
+    // --- Mock File Upload Logic ---
+    uploadZone.addEventListener("click", () => fileInput.click());
+    
+    uploadZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = "var(--primary)";
+        uploadZone.style.background = "rgba(79, 70, 229, 0.1)";
     });
-
-    function scrollToBottom() {
-        chatHistory.scrollTop = chatHistory.scrollHeight;
+    
+    uploadZone.addEventListener("dragleave", () => {
+        uploadZone.style.borderColor = "var(--border-glass)";
+        uploadZone.style.background = "rgba(255, 255, 255, 0.02)";
+    });
+    
+    uploadZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = "var(--border-glass)";
+        uploadZone.style.background = "rgba(255, 255, 255, 0.02)";
+        if (e.dataTransfer.files.length) {
+            handleFileUpload(e.dataTransfer.files[0]);
+        }
+    });
+    
+    fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length) {
+            handleFileUpload(e.target.files[0]);
+        }
+    });
+    
+    function handleFileUpload(file) {
+        uploadStatus.className = "status-msg";
+        uploadStatus.innerText = `Ingesting ${file.name}... ⏳`;
+        
+        // Mock delay for UI showcasing
+        setTimeout(() => {
+            uploadStatus.className = "status-msg success";
+            uploadStatus.innerText = `✅ Automated Ingestion Complete for ${file.name}!`;
+        }, 1500);
     }
-
-    function escapeHTML(str) {
-        return str.replace(/[&<>'"]/g, 
-            tag => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                "'": '&#39;',
-                '"': '&quot;'
-            }[tag])
-        );
+    
+    // --- Mock Chat Logic ---
+    chatForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const question = questionInput.value.trim();
+        if (!question) return;
+        
+        // Disable input
+        questionInput.disabled = true;
+        if (sendBtn) sendBtn.disabled = true;
+        
+        // Add user messages
+        appendMessage(ragChatBox, question, "user-msg");
+        appendMessage(baseChatBox, question, "user-msg");
+        
+        // Clear input
+        questionInput.value = "";
+        
+        // Sequential mock streaming
+        mockStreamResponse(question, ragChatBox, true, () => {
+            // Once RAG is done, do Base
+            mockStreamResponse(question, baseChatBox, false, () => {
+                // Once Base is done, re-enable input
+                questionInput.disabled = false;
+                if (sendBtn) sendBtn.disabled = false;
+                questionInput.focus();
+            });
+        });
+    });
+    
+    function appendMessage(container, text, className) {
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `message ${className}`;
+        msgDiv.innerText = text;
+        container.appendChild(msgDiv);
+        container.scrollTop = container.scrollHeight;
+        return msgDiv;
     }
+    
+    function mockStreamResponse(question, container, isRag, callback) {
+        const aiMsgDiv = appendMessage(container, "...", "ai-msg");
+        let currentText = "";
+        aiMsgDiv.innerText = "";
+        
+        let fullResponse = "";
+        let sourcesHTML = "";
+        
+        if (isRag) {
+            fullResponse = "Note: This is a static UI demonstration for portfolio purposes. To interact with the real RAG model and query your own private documents, please visit the GitHub repository, follow the README instructions, and run the complete model locally!";
+            sourcesHTML = `
+            <details class="sources-expander">
+                <summary>View Source Documents & Context</summary>
+                <div class="expander-content">
+                    <strong>Sources:</strong>
+                    <ul><li>project_overview.txt</li><li>hr_policies_2026.pdf</li></ul>
+                    <strong>Retrieved Context:</strong>
+                    <div>This document provides an overview of a Proof of Concept (POC) for an Enterprise HR Policy Assistant using a 'RAG' architecture...</div>
+                </div>
+            </details>`;
+        } else {
+            fullResponse = "Note: This is a static UI demonstration. The real base model (Qwen2.5:7b) runs locally on your machine for complete privacy. Visit the GitHub repo to run the full application!";
+        }
+        
+        const words = fullResponse.split(" ");
+        let i = 0;
+        
+        const interval = setInterval(() => {
+            if (i < words.length) {
+                currentText += (i > 0 ? " " : "") + words[i];
+                aiMsgDiv.innerText = currentText;
+                container.scrollTop = container.scrollHeight;
+                i++;
+            } else {
+                clearInterval(interval);
+                if (isRag) {
+                    aiMsgDiv.innerHTML = currentText + sourcesHTML;
+                } else {
+                    aiMsgDiv.innerHTML = currentText;
+                }
+                container.scrollTop = container.scrollHeight;
+                
+                if (callback) callback();
+            }
+        }, 50); // 50ms per word to simulate streaming
+    }
+    
 });

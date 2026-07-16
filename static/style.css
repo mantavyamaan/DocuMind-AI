@@ -363,3 +363,57 @@ button:active {
 .send-icon {
     font-size: 1.2rem;
 }
+
+/* History Button */
+.history-btn {
+    width: 100%;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    padding: 0.6rem;
+    margin-top: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-glass);
+}
+.history-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Expander (Details/Summary) */
+details.sources-expander {
+    margin-top: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+details.sources-expander summary {
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary);
+    list-style: none; /* Hide default arrow in some browsers */
+}
+details.sources-expander summary::-webkit-details-marker {
+    display: none;
+}
+details.sources-expander summary::before {
+    content: "▶ ";
+    font-size: 0.7rem;
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+details.sources-expander[open] summary::before {
+    transform: rotate(90deg);
+}
+.expander-content {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+.expander-content::-webkit-scrollbar { width: 4px; }
+.expander-content::-webkit-scrollbar-track { background: transparent; }
+.expander-content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }

@@ -21,7 +21,8 @@ Instead of relying on computationally expensive fine-tuning, this project utiliz
 * **LLM Engine:** Ollama (`qwen2.5:7b`)
 * **Orchestration:** LangChain
 * **Document Parsing:** `pypdf`, `python-docx`, `python-pptx`, `unstructured`
-* **Frontend:** Streamlit
+* **Backend:** FastAPI
+* **Frontend:** Custom HTML/CSS/Vanilla JS (Glassmorphic)
 * **Local Mode Stack:** ChromaDB, `nomic-embed-text`
 * **Enterprise Cloud Stack:** Amazon S3, Pinecone, OpenAI (`text-embedding-3-small`)
 
@@ -72,27 +73,27 @@ Copy the `.env.example` file to a new file named `.env`:
 ### Option A: Local Mode (Default)
 Runs 100% locally on your laptop using ChromaDB and Ollama.
 * Leave `USE_CLOUD_SETUP=false` in your `.env` file.
-* Upload documents directly via the Streamlit UI.
+* Upload documents directly via the Web UI.
 
 ### Option B: Enterprise Cloud Mode (For 100 GB+ Datasets)
 Bypasses local hardware limits by streaming from Amazon S3, embedding with OpenAI, and storing in Pinecone.
 * Set `USE_CLOUD_SETUP=true` in your `.env` file.
 * Fill in your AWS, Pinecone, and OpenAI API keys in the `.env` file.
-* Upload documents directly via the Streamlit UI (which will automatically pipe them into S3).
+* Upload documents directly via the Web UI (which will automatically pipe them into S3).
 
 ---
 
 ## 🏃‍♂️ Running the Application
 
-### 1. Launch the Web Interface
-Start the Streamlit application to interact with DocuMind AI:
+### 1. Launch the Web Server
+Start the FastAPI server to interact with DocuMind AI:
 ```bash
-streamlit run app.py
+uvicorn main:app
 ```
-*This will open a browser window (usually at `http://localhost:8501`).*
+*This will open a local web server (usually at `http://localhost:8000`). Navigate to this URL in your browser.*
 
 ### 2. Ingest the Data (Fully Automated)
-You no longer need to run manual ingestion scripts! Simply open the Web Interface, look for the **Document Management** sidebar, and upload a `.pdf`, `.docx`, `.pptx`, or `.txt` file. The backend will instantly process and index your file in real-time.
+You no longer need to run manual ingestion scripts! Simply open the Web UI, look for the **Document Management** sidebar, and drag-and-drop a `.pdf`, `.docx`, `.pptx`, or `.txt` file. The backend will instantly process and index your file in real-time.
 
 ### 3. View Logs
 All chats are securely logged in the local `chat_history.db` file.

@@ -14,7 +14,8 @@ def init_db():
             question TEXT NOT NULL,
             base_answer TEXT NOT NULL,
             rag_answer TEXT NOT NULL,
-            sources TEXT
+            sources TEXT,
+            context TEXT
         )
     ''')
     cursor.execute('''
@@ -28,7 +29,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-def save_interaction(question, base_answer, rag_answer, sources):
+def save_interaction(question, base_answer, rag_answer, sources, context):
     """Saves a single Q&A interaction to the database."""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sources_str = ", ".join(sources) if sources else "None"
@@ -36,9 +37,9 @@ def save_interaction(question, base_answer, rag_answer, sources):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO history (timestamp, question, base_answer, rag_answer, sources)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (timestamp, question, base_answer, rag_answer, sources_str))
+        INSERT INTO history (timestamp, question, base_answer, rag_answer, sources, context)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (timestamp, question, base_answer, rag_answer, sources_str, context))
     conn.commit()
     conn.close()
 
@@ -78,10 +79,10 @@ def get_all_history():
     """Retrieves all chat interactions from the database."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute('SELECT timestamp, question, rag_answer, sources FROM history ORDER BY id DESC')
+    cursor.execute('SELECT timestamp, question, base_answer, rag_answer, sources, context FROM history ORDER BY id ASC')
     rows = cursor.fetchall()
     conn.close()
-    return [{"timestamp": row[0], "question": row[1], "rag_answer": row[2], "sources": row[3]} for row in rows]
+    return [{"timestamp": row[0], "question": row[1], "base_answer": row[2], "rag_answer": row[3], "sources": row[4], "context": row[5]} for row in rows]
 
 # Initialize the database when the module is imported
 init_db()

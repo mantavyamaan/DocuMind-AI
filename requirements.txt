@@ -14,3 +14,6 @@ langchain-openai
 python-pptx
 python-docx
 unstructured
+fastapi
+uvicorn
+python-multipart

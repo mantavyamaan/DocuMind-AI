@@ -1,0 +1,38 @@
+Project Overview: HR Policy Assistant (RAG POC)
+1. What is it?
+This project is a Proof of Concept (POC) for an Enterprise HR Policy Assistant. It demonstrates how to take a general-purpose, open-source Large Language Model (LLM) and specialize it for internal company use without the need for expensive and complex fine-tuning.
+It achieves this using a technique called Retrieval-Augmented Generation (RAG), which allows the AI to search through your internal, private documents and use them to formulate its answers, while running entirely locally to guarantee data privacy.
+2. What does it do?
+From a user's perspective, it provides a chat-like web interface where employees can ask questions about company HR policies (e.g., "How many casual leaves are allowed per year?").
+Key Capabilities:
+•	Side-by-Side Comparison: The interface visually compares how a "Base AI" (with no internal knowledge) answers a question versus how the "RAG-Optimized AI" (grounded in your documents) answers it.
+•	Source Citations: When the optimized AI provides an answer, it explicitly lists the internal files (e.g., leave_policy.txt) it used to get that information.
+•	Prevents Hallucinations: The AI is strictly instructed to say "I could not find this information in the provided documents" if the answer isn't in your HR policies. It will not guess or make things up.
+•	100% Private: Because it uses local open-source models via Ollama, no sensitive company data is ever sent to external servers like OpenAI or Google.
+3. How does it work? (The Architecture)
+The project is built using Python and relies on a few key technologies:
+•	LLM Engine: Ollama running the qwen2.5:7b model locally.
+•	Orchestration: LangChain (to connect the different pieces together).
+•	Database: ChromaDB (a specialized database for AI called a vector database).
+•	Frontend: Streamlit (for the user interface).
+The Workflow is divided into two main phases:
+Phase A: Document Ingestion (The Setup - ingest.py)
+Before the AI can answer questions, it needs to "read" the policies.
+1.	Loading: The script reads raw text files from the data/ folder (e.g., leave_policy.txt).
+2.	Chunking: It breaks these large documents down into smaller, manageable paragraphs or "chunks" (700 characters each).
+3.	Embedding: It uses a secondary AI model (nomic-embed-text) to convert the text of these chunks into mathematical vectors (embeddings) that represent the meaning of the text.
+4.	Storage: It saves these vectors into a local database (ChromaDB) in the vector_db/ folder so they can be quickly searched later.
+Phase B: Question Answering (The Application - rag.py & app.py)
+When a user asks a question in the Streamlit web interface (app.py):
+1.	Retrieval: The system takes the user's question, converts it into a vector, and searches the ChromaDB database for the top 4 most relevant document chunks that match the meaning of the question.
+2.	Prompt Construction: The system creates a strict "prompt" for the LLM. It essentially says: "You are an HR assistant. Here are 4 paragraphs from our policy handbook. Answer the user's question using ONLY these paragraphs. Do not guess."
+3.	Generation: The qwen2.5:7b LLM reads the retrieved paragraphs and generates a concise, accurate answer based purely on that provided context.
+4.	Display: The web interface displays the answer along with the names of the source files.
+4. Evaluation and Metrics (evaluvate.py)
+To prove that this RAG approach actually works better than just using a standard AI, the project includes an automated testing script.
+•	It takes a list of predefined test questions and expected keywords from eval/questions.json.
+•	It asks both the Base Model and the RAG Model the same questions.
+•	It automatically grades them based on whether they produced the correct factual keywords, generating a summary report (Accuracy %) to quantify the improvement RAG brings.
+Summary:
+It is a secure, private AI assistant that acts as an expert on our internal HR policies. Instead of retraining a massive AI model—which is expensive and slow—we used a 'RAG' architecture. This means the AI searches our actual policy documents in real-time and uses them to answer employee questions, providing exact source citations and completely eliminating the risk of the AI making things up. Everything runs locally, ensuring our internal data never leaves the building."
+

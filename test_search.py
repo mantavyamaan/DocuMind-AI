@@ -1,0 +1,14 @@
+from langchain_chroma import Chroma
+from langchain_ollama import OllamaEmbeddings
+import pprint
+
+embeddings = OllamaEmbeddings(model='nomic-embed-text')
+db = Chroma(persist_directory='vector_db', embedding_function=embeddings)
+
+query = "what are key capabilities"
+print(f"Querying: {query}")
+results = db.similarity_search_with_score(query, k=10)
+
+print('Top 10 results:')
+for doc, score in results:
+    print(f"Score: {score} | Source: {doc.metadata.get('source')} | Content: {doc.page_content[:150]}...")
