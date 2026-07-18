@@ -1,7 +1,7 @@
 # DocuMind AI
 
 
-**🌐 [Try the Live Demo →](https://mantavyamaan.github.io/DocuMind-AI/static_demo)**
+**🌐 [Try the Live Demo(to get the idea of ui) →](https://mantavyamaan.github.io/DocuMind-AI/static_demo)**
 
 ## Overview
 
